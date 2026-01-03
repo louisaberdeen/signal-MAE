@@ -1,0 +1,32 @@
+# Environment
+.env
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Data (large files)
+data/ESC-50-master/audio/
+data/embeddings/
+data/imgs/full/
+checkpoints/*.pt
+
+# Generated files (regenerate on demand)
+notebooks/generated/
+tests/generated/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# System
+.DS_Store
+Thumbs.db
+
+# Claude
+.claude/
