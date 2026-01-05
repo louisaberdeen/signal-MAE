@@ -1,3 +1,17 @@
+This projecct is my first truly vibe-coded project so use as your own risk! I have to say Opus 4.5 has the sauce.
+
+# FiftyOne Visualisation
+
+FiftyOne is a very neat tool for visualising all sort of datsets. Here for example we have the ESC-50 dataset of environmental sources (helicopters, dogs, etc.). Besides being able to easily view the spectrograms of our audio files we can incorporate embeddings and similiarty search directly into our filtering workflows. To demonstate this I quickly trained a MAE model based on AudioMAE++: https://arxiv.org/abs/2507.10464 to generate embeddings for this project.
+![Standard view](docs/ss/Screenshot%20from%202026-01-05%2001-05-05.png)
+You can simply select on a sound file of interest and like magic instantly find your files with similar acoustic structure and texture. WOW!
+![Similarity view](docs/ss/Screenshot%20from%202026-01-05%2001-09-38.png)
+I simulated the sound files being collected across Dartmoor, a national park near where I grew up, to simulate using geospatial analysis to find trends.
+![Map view](docs/ss/Screenshot%20from%202026-01-05%2001-05-34.png)
+We can use the embeddings to justify intutions we have about relationships between sounds. For example, in this plot we can see that clapping and a helicopter are more similar to each other than a rooster or chicken.
+![Embedding view](docs/ss/Screenshot%20from%202026-01-05%2001-08-23.png)
+
+
 # AudioMAE++ Framework
 
 A modular audio/signal machine learning framework with plugin-based architecture for training masked autoencoders. Supports ESC-50 environmental sound classification and extensibility to RF signals (RadioML).
