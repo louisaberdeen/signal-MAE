@@ -1,0 +1,57 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+  pull_request:
+    branches:
+      - main
+      - dev
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+          pip install pytest numpy einops tqdm
+
+      - name: Generate tests
+        run: python tests/generate_tests.py
+
+      - name: Run tests
+        run: python -m pytest tests/generated/ -v --tb=short
+
+      - name: Verify plugin registration
+        run: |
+          python -c "
+          from src import model_registry, data_loader_registry, transform_registry
+          print('Models:', model_registry.list())
+          print('Data Loaders:', data_loader_registry.list())
+          print('Transforms:', transform_registry.list())
+          assert len(model_registry.list()) >= 2, 'Expected at least 2 models'
+          assert len(data_loader_registry.list()) >= 3, 'Expected at least 3 data loaders'
+          assert len(transform_registry.list()) >= 4, 'Expected at least 4 transforms'
+          print('All plugin registries verified!')
+          "
