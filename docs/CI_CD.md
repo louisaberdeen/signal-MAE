@@ -1,6 +1,6 @@
 # CI/CD Pipeline
 
-This project uses GitHub Actions for continuous integration.
+This project uses GitHub Actions for continuous integration with [uv](https://github.com/astral-sh/uv) for fast dependency installation.
 
 ## Overview
 
@@ -48,11 +48,48 @@ on:
 |------|-------------|
 | Checkout | Clone repository |
 | Setup Python | Install Python 3.11 |
-| Cache | Cache pip dependencies |
-| Install | Install torch, pytest, numpy, einops, tqdm |
+| Install uv | Install uv package manager |
+| Install dependencies | `uv pip install -e ".[dev]"` from pyproject.toml |
 | Generate Tests | Run test generator for plugins |
 | Run Tests | Execute pytest on generated tests |
 | Verify Plugins | Confirm registries have expected plugins |
+
+## Dependencies
+
+All dependencies are defined in `pyproject.toml`:
+
+```toml
+[project]
+dependencies = [
+    "torch>=2.0.0",
+    "torchvision>=0.15.0",
+    "numpy>=1.24.0",
+    "pandas>=2.0.0",
+    "einops>=0.7.0",
+    "tqdm>=4.65.0",
+    "pillow>=10.0.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0.0", "pytest-cov>=4.0.0"]
+```
+
+## Local Setup with uv
+
+```bash
+# Install uv (fast Python package installer)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Create virtual environment
+uv venv .venv
+source .venv/bin/activate
+
+# Install all dependencies
+uv pip install -e ".[all]"
+
+# Or just dev dependencies for testing
+uv pip install -e ".[dev]"
+```
 
 ## Local Testing
 
@@ -83,7 +120,7 @@ dev (development)
   ↑
   │ PR with passing tests
   │
-feature/cleanup/* (feature branches)
+feature/* (feature branches)
 ```
 
 ## Adding New Tests
@@ -101,8 +138,12 @@ When adding new plugins to `src/`, the test generator automatically creates test
 **Tests fail on CI but pass locally:**
 - Ensure all imports are correct (no local-only paths)
 - Check Python version compatibility (CI uses 3.11)
-- Verify all dependencies are installed in CI
+- Verify all dependencies are in `pyproject.toml`
 
 **Plugin not registered:**
 - Ensure class is imported in `__init__.py`
 - Check decorator syntax: `@registry.register("name")`
+
+**Missing dependency in CI:**
+- Add it to `pyproject.toml` under `dependencies` or `[project.optional-dependencies]`
+- For test-only deps, add to `dev` extras
