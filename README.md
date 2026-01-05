@@ -23,6 +23,41 @@ A modular audio/signal machine learning framework with plugin-based architecture
 - **Automatic Test Generation**: Verify plugin interface compliance
 - **FiftyOne Integration**: Visualize embeddings with similarity search and UMAP/t-SNE
 
+## Installation
+
+### Using uv (Recommended)
+
+[uv](https://github.com/astral-sh/uv) is a fast Python package installer.
+
+```bash
+# Install uv (if not already installed)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Create virtual environment and install dependencies
+uv venv .venv
+source .venv/bin/activate
+uv pip install -e ".[all]"
+```
+
+### Using pip
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -e ".[all]"
+```
+
+### Dependency Groups
+
+| Group | Command | Includes |
+|-------|---------|----------|
+| Base | `pip install -e .` | torch, numpy, pandas, einops, tqdm, pillow |
+| Audio | `pip install -e ".[audio]"` | + librosa, scipy |
+| Visualization | `pip install -e ".[visualization]"` | + fiftyone, umap-learn, matplotlib |
+| Training | `pip install -e ".[training]"` | + mlflow |
+| Dev | `pip install -e ".[dev]"` | + pytest, pytest-cov |
+| All | `pip install -e ".[all]"` | Everything |
+
 ## Quick Start
 
 ```bash
