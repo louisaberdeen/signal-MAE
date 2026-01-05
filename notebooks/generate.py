@@ -617,7 +617,7 @@ val_loader = torch.utils.data.DataLoader(
 print(f"Train batches: {len(train_loader)}, Val batches: {len(val_loader)}")
 """))
 
-        cells.append(self._create_markdown_cell("### 8.2 Create Model"))
+        cells.append(self._create_markdown_cell("### 8.4 Create Model"))
         cells.append(self._create_code_cell("""# Create model with configuration
 model = AudioMAEPlusPlus(config)
 model = model.to(device)
@@ -629,7 +629,7 @@ print(f"Total parameters: {total_params:,}")
 print(f"Trainable parameters: {trainable_params:,}")
 """))
 
-        cells.append(self._create_markdown_cell("### 8.3 Setup Optimizer"))
+        cells.append(self._create_markdown_cell("### 8.5 Setup Optimizer"))
         cells.append(self._create_code_cell("""# AdamW optimizer with weight decay
 optimizer = torch.optim.AdamW(
     model.parameters(),
@@ -653,7 +653,7 @@ scheduler = torch.optim.lr_scheduler.LambdaLR(
 )
 """))
 
-        cells.append(self._create_markdown_cell("### 8.4 Training Loop"))
+        cells.append(self._create_markdown_cell("### 8.6 Training Loop"))
         cells.append(self._create_code_cell("""# Training history
 history = {
     'train_loss': [],
