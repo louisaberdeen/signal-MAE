@@ -201,19 +201,21 @@ def create_small_config() -> Config:
     )
 
 
-def create_rf_config(size: str = "base") -> Config:
+def create_rf_config(size: str = "base", advanced: bool = False) -> Config:
     """
     Create configuration optimized for RF signal spectrograms.
 
     RF spectrograms from TorchSig are typically 224x224 images with
-    time on one axis and frequency on the other. The model uses
-    standard ViT-MAE settings without advanced features for simplicity.
+    time on one axis and frequency on the other.
 
     Args:
         size: Model size - "small", "base", or "tiny"
             - tiny: Minimal model for testing (256-dim, 4 layers)
             - small: Faster training (384-dim, 6 layers)
             - base: Full model (768-dim, 12 layers)
+        advanced: If True, enable advanced features (Macaron, SwiGLU, RoPE)
+            - False: Standard ViT-MAE (SignalMAE baseline)
+            - True: Full AudioMAE++ features (SignalMAE++)
 
     Returns:
         Config optimized for RF signal processing
@@ -221,24 +223,27 @@ def create_rf_config(size: str = "base") -> Config:
     Example:
         from src.config import create_rf_config
 
-        # For quick experiments
-        config = create_rf_config("small")
-
-        # For full training
+        # Baseline model (simple, for comparison)
         config = create_rf_config("base")
+
+        # Advanced model with all features
+        config = create_rf_config("base", advanced=True)
+
+        # Small advanced model
+        config = create_rf_config("small", advanced=True)
     """
     # Common RF settings
     rf_common = {
         "img_size": 224,
         "patch_size": 16,
         "mask_ratio": 0.75,
-        # Disable advanced features for baseline simplicity
-        "use_macaron": False,
-        "use_swiglu": False,
-        "use_rope": False,
-        # Disable extra losses initially
-        "use_contrastive_loss": False,
-        "use_uniformity_loss": False,
+        # Advanced features controlled by parameter
+        "use_macaron": advanced,
+        "use_swiglu": advanced,
+        "use_rope": advanced,
+        # Contrastive losses (can help with clustering)
+        "use_contrastive_loss": advanced,
+        "use_uniformity_loss": advanced,
         # Use mean pooling for embeddings
         "pooling_mode": "mean",
     }

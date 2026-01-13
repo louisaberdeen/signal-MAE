@@ -75,6 +75,24 @@ class TestRFConfig:
         config = create_rf_config("base")
         assert config.pooling_mode == "mean"
 
+    def test_rf_config_advanced_enables_features(self):
+        """Test advanced=True enables all features."""
+        config = create_rf_config("base", advanced=True)
+
+        assert config.use_macaron is True
+        assert config.use_swiglu is True
+        assert config.use_rope is True
+        assert config.use_contrastive_loss is True
+        assert config.use_uniformity_loss is True
+
+    def test_rf_config_advanced_small(self):
+        """Test advanced config works with small size."""
+        config = create_rf_config("small", advanced=True)
+
+        assert config.embed_dim == 384
+        assert config.use_macaron is True
+        assert config.use_swiglu is True
+
 
 class TestSignalMAE:
     """Tests for SignalMAE model."""
@@ -225,6 +243,72 @@ class TestSignalMAESmall:
 
         assert model is not None
         assert model.embed_dim == 384
+
+
+class TestSignalMAEPlusPlus:
+    """Tests for SignalMAE++ advanced variant."""
+
+    @pytest.fixture
+    def config(self):
+        """Create advanced config for testing."""
+        return create_rf_config("tiny", advanced=True)
+
+    @pytest.fixture
+    def model(self, config):
+        """Create SignalMAE++ model."""
+        from src.models.signalmae import SignalMAEPlusPlus
+        return SignalMAEPlusPlus(config)
+
+    def test_model_registration(self):
+        """Test SignalMAE++ is registered in model registry."""
+        assert "signalmae++" in model_registry
+
+    def test_model_creation_via_registry(self, config):
+        """Test creating model through registry."""
+        model = model_registry.create("signalmae++", config)
+        assert model is not None
+
+    def test_advanced_features_enabled(self, model):
+        """Test advanced features are enabled."""
+        info = model.get_model_info()
+
+        assert info["model_name"] == "SignalMAE++"
+        assert info["uses_macaron"] is True
+        assert info["uses_swiglu"] is True
+        assert info["uses_rope"] is True
+
+    def test_forward_pass(self, model):
+        """Test forward pass works."""
+        x = torch.randn(2, 3, 224, 224)
+        loss, pred, mask = model(x, mask_ratio=0.75)
+
+        assert isinstance(loss, torch.Tensor)
+        assert pred.shape[0] == 2
+
+    def test_embedding_extraction(self, model):
+        """Test embedding extraction."""
+        x = torch.randn(2, 3, 224, 224)
+        emb = model.get_embedding(x, pooling_mode="mean")
+
+        assert emb.shape == (2, model.embed_dim)
+
+    def test_signal_type(self, model):
+        """Test signal_type property."""
+        assert model.signal_type == "rf_spectrogram"
+
+    def test_config_forces_advanced(self):
+        """Test that SignalMAE++ enables features even if config disables them."""
+        from src.models.signalmae import SignalMAEPlusPlus
+
+        # Create config with features disabled
+        config = create_rf_config("tiny", advanced=False)
+        model = SignalMAEPlusPlus(config)
+
+        # Model should still have features enabled
+        info = model.get_model_info()
+        assert info["uses_macaron"] is True
+        assert info["uses_swiglu"] is True
+        assert info["uses_rope"] is True
 
 
 class TestSignalMAEClassifier:

@@ -21,6 +21,7 @@ from typing import Tuple, Optional, Dict, Any
 from src.registry import model_registry
 from src.config import Config
 from src.models.baseline import BaselineMAE
+from src.models.audiomae import AudioMAEPlusPlus
 from src.models.base import BaseClassifier
 
 
@@ -104,6 +105,118 @@ class SignalMAE(BaselineMAE):
             "uses_macaron": False,
             "uses_swiglu": False,
             "uses_rope": False,
+        }
+
+
+@model_registry.register("signalmae++", version="1.0")
+class SignalMAEPlusPlus(AudioMAEPlusPlus):
+    """
+    Advanced Masked Autoencoder for RF signal spectrograms.
+
+    This model uses the full AudioMAE++ architecture with all advanced features:
+    - Macaron-style transformer blocks (FFN → Attention → FFN sandwich)
+    - SwiGLU activation (gated linear unit with Swish)
+    - RoPE (Rotary Position Embeddings) for better generalization
+
+    Use this when you want maximum model capacity and have sufficient
+    compute resources. For a simpler baseline, use SignalMAE instead.
+
+    Input: RF spectrograms [B, 3, 224, 224]
+        - Generated from IQ data using TorchSig + IQToSpectrogram transform
+
+    Example:
+        from src.models.signalmae import SignalMAEPlusPlus
+        from src.config import create_rf_config
+
+        # Create model with advanced features
+        config = create_rf_config("base", advanced=True)
+        model = SignalMAEPlusPlus(config)
+
+        # Pre-training
+        loss, pred, mask = model(spectrograms, mask_ratio=0.75)
+
+        # Embedding extraction
+        embeddings = model.get_embedding(spectrograms, pooling_mode="mean")
+
+    Args:
+        config: Configuration object with model hyperparameters.
+                Advanced features should be enabled in config.
+    """
+
+    def __init__(self, config: Config):
+        """
+        Initialize SignalMAE++.
+
+        Args:
+            config: Configuration object. For full advanced features, use
+                    create_rf_config(size, advanced=True).
+        """
+        # Ensure advanced features are enabled
+        advanced_config = Config(
+            # Copy all settings from input config
+            sample_rate=config.sample_rate,
+            n_mels=config.n_mels,
+            n_fft=config.n_fft,
+            hop_length=config.hop_length,
+            audio_duration=config.audio_duration,
+            img_size=config.img_size,
+            patch_size=config.patch_size,
+            embed_dim=config.embed_dim,
+            encoder_depth=config.encoder_depth,
+            encoder_heads=config.encoder_heads,
+            decoder_embed_dim=config.decoder_embed_dim,
+            decoder_depth=config.decoder_depth,
+            decoder_heads=config.decoder_heads,
+            mlp_ratio=config.mlp_ratio,
+            mask_ratio=config.mask_ratio,
+            batch_size=config.batch_size,
+            learning_rate=config.learning_rate,
+            weight_decay=config.weight_decay,
+            epochs=config.epochs,
+            warmup_epochs=config.warmup_epochs,
+            pooling_mode=config.pooling_mode,
+            # Enable ALL advanced features
+            use_macaron=True,
+            use_swiglu=True,
+            use_rope=True,
+            # Enable contrastive losses for better embeddings
+            use_contrastive_loss=config.use_contrastive_loss,
+            use_uniformity_loss=config.use_uniformity_loss,
+            contrastive_weight=config.contrastive_weight,
+            contrastive_temperature=config.contrastive_temperature,
+            uniformity_weight=config.uniformity_weight,
+            uniformity_t=config.uniformity_t,
+        )
+
+        super().__init__(advanced_config)
+        self._signal_type = "rf_spectrogram"
+
+    @property
+    def signal_type(self) -> str:
+        """Type of signal this model processes."""
+        return self._signal_type
+
+    def get_model_info(self) -> Dict[str, Any]:
+        """
+        Get model information for logging/debugging.
+
+        Returns:
+            Dictionary with model configuration and statistics
+        """
+        return {
+            "model_name": "SignalMAE++",
+            "version": "1.0",
+            "signal_type": self.signal_type,
+            "embed_dim": self.embed_dim,
+            "num_patches": self.num_patches,
+            "encoder_depth": self.config.encoder_depth,
+            "decoder_depth": self.config.decoder_depth,
+            "mask_ratio": self.config.mask_ratio,
+            "num_parameters": sum(p.numel() for p in self.parameters()),
+            "num_trainable": sum(p.numel() for p in self.parameters() if p.requires_grad),
+            "uses_macaron": True,
+            "uses_swiglu": True,
+            "uses_rope": True,
         }
 
 
