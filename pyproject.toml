@@ -8,7 +8,7 @@ license = {text = "MIT"}
 authors = [
     {name = "Louis Aberdeen", email = "louisaberdeen@gmail.com"}
 ]
-keywords = ["audio", "machine-learning", "masked-autoencoder", "pytorch", "fiftyone"]
+keywords = ["audio", "rf", "signals", "machine-learning", "masked-autoencoder", "pytorch", "fiftyone", "torchsig", "modulation-classification"]
 
 dependencies = [
     "torch>=2.0.0",
@@ -25,6 +25,10 @@ audio = [
     "librosa>=0.10.0",
     "scipy>=1.10.0",
 ]
+rf = [
+    "torchsig>=0.5.0",
+    "scipy>=1.10.0",
+]
 visualization = [
     "fiftyone>=0.23.0",
     "umap-learn>=0.5.0",
@@ -38,7 +42,7 @@ dev = [
     "pytest-cov>=4.0.0",
 ]
 all = [
-    "signal-mae[audio,visualization,training,dev]",
+    "signal-mae[audio,rf,visualization,training,dev]",
 ]
 
 [project.urls]
