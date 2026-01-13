@@ -199,3 +199,96 @@ def create_small_config() -> Config:
         decoder_depth=4,
         decoder_heads=8,
     )
+
+
+def create_rf_config(size: str = "base") -> Config:
+    """
+    Create configuration optimized for RF signal spectrograms.
+
+    RF spectrograms from TorchSig are typically 224x224 images with
+    time on one axis and frequency on the other. The model uses
+    standard ViT-MAE settings without advanced features for simplicity.
+
+    Args:
+        size: Model size - "small", "base", or "tiny"
+            - tiny: Minimal model for testing (256-dim, 4 layers)
+            - small: Faster training (384-dim, 6 layers)
+            - base: Full model (768-dim, 12 layers)
+
+    Returns:
+        Config optimized for RF signal processing
+
+    Example:
+        from src.config import create_rf_config
+
+        # For quick experiments
+        config = create_rf_config("small")
+
+        # For full training
+        config = create_rf_config("base")
+    """
+    # Common RF settings
+    rf_common = {
+        "img_size": 224,
+        "patch_size": 16,
+        "mask_ratio": 0.75,
+        # Disable advanced features for baseline simplicity
+        "use_macaron": False,
+        "use_swiglu": False,
+        "use_rope": False,
+        # Disable extra losses initially
+        "use_contrastive_loss": False,
+        "use_uniformity_loss": False,
+        # Use mean pooling for embeddings
+        "pooling_mode": "mean",
+    }
+
+    sizes = {
+        "tiny": Config(
+            embed_dim=256,
+            encoder_depth=4,
+            encoder_heads=4,
+            decoder_embed_dim=128,
+            decoder_depth=2,
+            decoder_heads=4,
+            mlp_ratio=4.0,
+            batch_size=32,
+            learning_rate=1e-4,
+            epochs=20,
+            warmup_epochs=2,
+            **rf_common,
+        ),
+        "small": Config(
+            embed_dim=384,
+            encoder_depth=6,
+            encoder_heads=6,
+            decoder_embed_dim=256,
+            decoder_depth=4,
+            decoder_heads=8,
+            mlp_ratio=4.0,
+            batch_size=32,
+            learning_rate=1.5e-4,
+            epochs=50,
+            warmup_epochs=5,
+            **rf_common,
+        ),
+        "base": Config(
+            embed_dim=768,
+            encoder_depth=12,
+            encoder_heads=12,
+            decoder_embed_dim=512,
+            decoder_depth=8,
+            decoder_heads=16,
+            mlp_ratio=4.0,
+            batch_size=16,
+            learning_rate=1.5e-4,
+            epochs=100,
+            warmup_epochs=10,
+            **rf_common,
+        ),
+    }
+
+    if size not in sizes:
+        raise ValueError(f"Unknown size '{size}'. Choose from: {list(sizes.keys())}")
+
+    return sizes[size]
