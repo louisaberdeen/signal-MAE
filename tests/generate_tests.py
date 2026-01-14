@@ -181,13 +181,15 @@ class TestModelArchitectures:
         model = model.to(device)
         model.eval()
 
-        batch = torch.randn(2, 3, config.img_size, config.img_size, device=device)
+        # Use model's actual img_size in case it was overridden
+        actual_img_size = model.config.img_size if hasattr(model, 'config') else config.img_size
+        batch = torch.randn(2, 3, actual_img_size, actual_img_size, device=device)
 
         with torch.no_grad():
             latent, mask, ids = model.forward_encoder(batch, mask_ratio=0.0)
 
-        expected_patches = config.num_patches
-        assert latent.shape == (2, expected_patches + 1, config.embed_dim)
+        # Use model's actual embed_dim/num_patches (may differ from config for models that override)
+        assert latent.shape == (2, model.num_patches + 1, model.embed_dim)
 
     def test_embedding_extraction(self, model_key, architecture, device):
         """Test embedding extraction with different pooling modes."""
@@ -206,15 +208,18 @@ class TestModelArchitectures:
         model = model.to(device)
         model.eval()
 
-        batch = torch.randn(2, 3, config.img_size, config.img_size, device=device)
+        # Use model's actual img_size in case it was overridden
+        actual_img_size = model.config.img_size if hasattr(model, 'config') else config.img_size
+        batch = torch.randn(2, 3, actual_img_size, actual_img_size, device=device)
 
         for mode in ["cls", "mean", "cls+mean"]:
             embedding = model.get_embedding(batch, pooling_mode=mode)
 
+            # Use model's actual embed_dim (may differ from config for models that override)
             if mode == "cls+mean":
-                assert embedding.shape == (2, config.embed_dim * 2)
+                assert embedding.shape == (2, model.embed_dim * 2)
             else:
-                assert embedding.shape == (2, config.embed_dim)
+                assert embedding.shape == (2, model.embed_dim)
 
     def test_full_forward(self, model_key, architecture, device):
         """Test full forward pass with reconstruction."""
@@ -235,14 +240,17 @@ class TestModelArchitectures:
         model = model.to(device)
         model.eval()
 
-        batch = torch.randn(2, 3, config.img_size, config.img_size, device=device)
+        # Use model's actual img_size in case it was overridden
+        actual_img_size = model.config.img_size if hasattr(model, 'config') else config.img_size
+        batch = torch.randn(2, 3, actual_img_size, actual_img_size, device=device)
 
         with torch.no_grad():
             loss, pred, mask = model(batch)
 
         assert loss.ndim == 0  # Scalar
         assert pred.shape[0] == 2
-        assert mask.shape == (2, config.num_patches)
+        # Use model's actual num_patches (may differ from config for models that override)
+        assert mask.shape == (2, model.num_patches)
 '''
 
     def generate_dataloader_tests(self) -> str:
