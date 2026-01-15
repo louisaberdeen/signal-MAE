@@ -913,9 +913,11 @@ import torch.nn.functional as F
 import numpy as np
 import matplotlib.pyplot as plt
 import math
+import json
 from pathlib import Path
-from typing import Optional, Dict, Any, Tuple, List
+from typing import Optional, Dict, Any, Tuple, List, Union
 from dataclasses import dataclass, field, asdict
+from enum import Enum
 from tqdm.auto import tqdm
 from einops import rearrange
 import warnings
@@ -995,7 +997,7 @@ print(f"Modulations: {dataset_config.modulations}")""",
             "classification": """# Classification preset (good for modulation recognition)
 dataset_config = TorchSigConfig.classification_preset()
 print(f"Dataset: {dataset_config.num_samples} samples, {len(dataset_config.modulations)} modulations")
-print(f"SNR range: {dataset_config.snr_range} dB")""",
+print(f"SNR range: {dataset_config.snr_db_min} to {dataset_config.snr_db_max} dB")""",
             "detection": """# Detection preset (signal detection task)
 dataset_config = TorchSigConfig.detection_preset()
 print(f"Dataset: {dataset_config.num_samples} samples")
@@ -1286,7 +1288,7 @@ print("IQ processing functions defined")
         for mod in tqdm(self.modulations, desc="Generating signals"):
             for _ in range(samples_per_mod):
                 # Random SNR within range
-                snr = np.random.uniform(config.snr_range[0], config.snr_range[1])
+                snr = np.random.uniform(config.snr_db_min, config.snr_db_max)
 
                 # Generate IQ data
                 if self.use_torchsig:
@@ -1660,7 +1662,8 @@ config_detect = TorchSigConfig.detection_preset()
 config_custom = TorchSigConfig(
     num_samples=5000,
     modulations=['BPSK', 'QPSK', '16QAM', '64QAM', 'OFDM'],
-    snr_range=(-5, 20),
+    snr_db_min=-5,
+    snr_db_max=20,
     num_iq_samples=2048,
 )
 ```
@@ -1803,7 +1806,8 @@ config = TorchSigConfig.detection_preset()
 config = TorchSigConfig(
     num_samples=5000,
     modulations=['BPSK', 'QPSK', '16QAM', 'OFDM'],
-    snr_range=(-5, 20),
+    snr_db_min=-5,
+    snr_db_max=20,
 )
 """)
         return
