@@ -94,8 +94,17 @@ pytest tests/generated/ -v
 
 ### Generating Notebooks
 ```bash
-# Generate self-contained training notebook
+# AudioMAE++ for audio (ESC-50)
 python notebooks/generate.py --model audiomae++ --dataset esc50
+
+# SignalMAE baseline for RF signals
+python notebooks/generate.py --model signalmae --dataset-config minimal
+
+# SignalMAE++ advanced for RF signals
+python notebooks/generate.py --model signalmae++ --dataset-config classification
+
+# List all example commands
+python notebooks/generate.py --list-examples
 ```
 
 ## Plugin Development
@@ -150,16 +159,26 @@ class MyTransform(BaseTransform):
 
 ## Model Architecture
 
-### AudioMAE++ (Default)
+### AudioMAE++ (Default for Audio)
 - **Macaron Blocks**: FFN(½) → Attention → FFN(½) sandwich
 - **SwiGLU Activation**: Better than GELU
 - **RoPE**: Rotary position embeddings
 - **Asymmetric**: Large encoder (12L/768D), small decoder (8L/512D)
 
+### SignalMAE (RF Signals)
+Two variants available for RF signal processing:
+
+| Model | Features | Use Case |
+|-------|----------|----------|
+| `signalmae` | Standard ViT-MAE (baseline) | Simple experiments, lower compute |
+| `signalmae++` | Macaron, SwiGLU, RoPE | Maximum capacity, best performance |
+| `signalmae-small` | Reduced dimensions | Quick prototyping, limited GPU |
+
 ### Configuration
 ```python
-from src.config import Config
+from src.config import Config, create_rf_config
 
+# AudioMAE++ configuration
 config = Config(
     img_size=224,
     patch_size=16,
@@ -171,6 +190,29 @@ config = Config(
     use_swiglu=True,
     use_rope=True,
 )
+
+# SignalMAE configurations
+config_baseline = create_rf_config(size="base", advanced=False)  # SignalMAE
+config_advanced = create_rf_config(size="base", advanced=True)   # SignalMAE++
+config_small = create_rf_config(size="small")                    # SignalMAE-Small
+```
+
+### Using SignalMAE Models
+```python
+from src.models.signalmae import SignalMAE, SignalMAEPlusPlus, SignalMAESmall
+from src.config import create_rf_config
+
+# Baseline model (standard ViT-MAE)
+config = create_rf_config(size="base", advanced=False)
+model = SignalMAE(config)
+
+# Advanced model (Macaron + SwiGLU + RoPE)
+config = create_rf_config(size="base", advanced=True)
+model = SignalMAEPlusPlus(config)
+
+# Small model for fast experiments
+config = create_rf_config(size="small")
+model = SignalMAESmall(config)
 ```
 
 ## Training Workflow
@@ -200,11 +242,16 @@ embeddings = generator.extract_embedding(spectrograms)
 | File | Purpose |
 |------|---------|
 | `src/registry.py` | Plugin registration system |
-| `src/config.py` | Configuration dataclass |
+| `src/config.py` | Configuration dataclass + `create_rf_config()` |
 | `src/models/audiomae.py` | AudioMAE++ implementation |
+| `src/models/signalmae.py` | SignalMAE, SignalMAE++, SignalMAESmall |
 | `src/data/esc50.py` | ESC-50 data loader |
+| `src/data/torchsig_config.py` | TorchSig dataset configuration |
+| `src/data/torchsig_generator.py` | RF dataset generator |
+| `src/training/rf_trainer.py` | RF signal training pipeline |
 | `tests/generate_tests.py` | Test generation |
-| `notebooks/generate.py` | Notebook generation |
+| `notebooks/generate.py` | Notebook generation (Audio + RF) |
+| `scripts/generate_rf_dataset.py` | CLI for RF dataset generation |
 
 ## Important Notes
 
@@ -237,9 +284,19 @@ pytest tests/ -v
 # Generate tests after adding plugins
 python tests/generate_tests.py
 
-# Generate training notebook
+# Generate AudioMAE++ notebook (audio)
 python notebooks/generate.py --model audiomae++ --dataset esc50
+
+# Generate SignalMAE notebooks (RF signals)
+python notebooks/generate.py --model signalmae --dataset-config minimal
+python notebooks/generate.py --model signalmae++ --dataset-config classification
 
 # List available modules
 python notebooks/generate.py --list-modules
+
+# Show example commands for notebook generation
+python notebooks/generate.py --list-examples
+
+# Generate RF dataset (requires TorchSig)
+python scripts/generate_rf_dataset.py --config classification --output data/rf/
 ```
