@@ -15,6 +15,7 @@ __pycache__/
 data/ESC-50-master/audio/
 data/embeddings/
 data/imgs/full/
+data/imgs/pre/
 checkpoints/*.pt
 
 # Generated files (regenerate on demand)
@@ -33,3 +34,4 @@ Thumbs.db
 
 *.png
 *.npy
+!/docs/ss/*.png
