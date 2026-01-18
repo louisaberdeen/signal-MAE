@@ -410,7 +410,7 @@ def save_checkpoint(model, optimizer, epoch, loss, path):
         # Data download and preparation
         cells.append(self._create_markdown_cell("## 8. Data Download & Preparation"))
         cells.append(self._create_code_cell("""# ============================================
-# CONFIGURATION
+# PATHS AND DIRECTORIES
 # ============================================
 
 # Paths
@@ -426,11 +426,15 @@ DATA_ROOT.mkdir(exist_ok=True)
 SPECTROGRAM_DIR.mkdir(exist_ok=True)
 CHECKPOINT_DIR.mkdir(exist_ok=True)
 
-# Training parameters
-NUM_EPOCHS = 10
-BATCH_SIZE = 16
-LEARNING_RATE = 1.5e-4
-SAVE_EVERY = 5  # Save checkpoint every N epochs
+# Display training configuration
+print("Training Configuration:")
+print(f"  Epochs: {config.epochs}")
+print(f"  Batch Size: {config.batch_size}")
+print(f"  Learning Rate: {config.learning_rate}")
+print(f"  Warmup Epochs: {config.warmup_epochs}")
+print(f"  Checkpoint Interval: {config.checkpoint_interval}")
+print(f"  Mask Ratio: {config.mask_ratio}")
+print(f"  Weight Decay: {config.weight_decay}")
 """))
 
         cells.append(self._create_markdown_cell("### 8.1 Download ESC-50 Dataset"))
@@ -601,7 +605,7 @@ print(f"Train: {len(train_dataset)}, Val: {len(val_dataset)}")
 # Create dataloaders
 train_loader = torch.utils.data.DataLoader(
     train_dataset,
-    batch_size=BATCH_SIZE,
+    batch_size=config.batch_size,
     shuffle=True,
     num_workers=0,
     pin_memory=True if device == "cuda" else False
@@ -609,7 +613,7 @@ train_loader = torch.utils.data.DataLoader(
 
 val_loader = torch.utils.data.DataLoader(
     val_dataset,
-    batch_size=BATCH_SIZE,
+    batch_size=config.batch_size,
     shuffle=False,
     num_workers=0
 )
@@ -633,23 +637,25 @@ print(f"Trainable parameters: {trainable_params:,}")
         cells.append(self._create_code_cell("""# AdamW optimizer with weight decay
 optimizer = torch.optim.AdamW(
     model.parameters(),
-    lr=LEARNING_RATE,
+    lr=config.learning_rate,
     weight_decay=config.weight_decay,
     betas=(0.9, 0.95)
 )
 
 # Learning rate scheduler with warmup
-def get_lr(epoch, warmup_epochs=5, total_epochs=NUM_EPOCHS):
-    if epoch < warmup_epochs:
-        return LEARNING_RATE * (epoch + 1) / warmup_epochs
+def get_lr(epoch, config):
+    \"\"\"Get learning rate for given epoch using warmup + cosine decay.\"\"\"
+    if epoch < config.warmup_epochs:
+        # Linear warmup
+        return config.learning_rate * (epoch + 1) / config.warmup_epochs
     else:
         # Cosine decay
-        progress = (epoch - warmup_epochs) / (total_epochs - warmup_epochs)
-        return LEARNING_RATE * 0.5 * (1 + math.cos(math.pi * progress))
+        progress = (epoch - config.warmup_epochs) / (config.epochs - config.warmup_epochs)
+        return config.learning_rate * 0.5 * (1 + math.cos(math.pi * progress))
 
 scheduler = torch.optim.lr_scheduler.LambdaLR(
     optimizer,
-    lr_lambda=lambda epoch: get_lr(epoch) / LEARNING_RATE
+    lr_lambda=lambda epoch: get_lr(epoch, config) / config.learning_rate
 )
 """))
 
@@ -661,13 +667,13 @@ history = {
     'lr': []
 }
 
-print(f"Starting training for {NUM_EPOCHS} epochs...")
+print(f"Starting training for {config.epochs} epochs...")
 print(f"Device: {device}")
 print("-" * 50)
 
 best_val_loss = float('inf')
 
-for epoch in range(NUM_EPOCHS):
+for epoch in range(config.epochs):
     # Get current learning rate
     current_lr = optimizer.param_groups[0]['lr']
     history['lr'].append(current_lr)
@@ -684,7 +690,7 @@ for epoch in range(NUM_EPOCHS):
     scheduler.step()
 
     # Print progress
-    print(f"Epoch {epoch + 1}/{NUM_EPOCHS} | "
+    print(f"Epoch {epoch + 1}/{config.epochs} | "
           f"Train Loss: {train_loss:.4f} | "
           f"Val Loss: {val_loss:.4f} | "
           f"LR: {current_lr:.2e}")
@@ -698,7 +704,7 @@ for epoch in range(NUM_EPOCHS):
         )
 
     # Save periodic checkpoint
-    if (epoch + 1) % SAVE_EVERY == 0:
+    if (epoch + 1) % config.checkpoint_interval == 0:
         save_checkpoint(
             model, optimizer, epoch, val_loss,
             Path(CHECKPOINT_DIR) / f"checkpoint_epoch_{epoch + 1}.pt"
@@ -1386,10 +1392,21 @@ print("Training functions defined")
 
         # Create dataset and model
         cells.append(self._create_markdown_cell("## 7. Create Dataset and Model"))
-        cells.append(self._create_code_cell(f"""# Training parameters
-BATCH_SIZE = 16
-NUM_EPOCHS = 10
-LEARNING_RATE = 1.5e-4
+
+        # Add config display cell
+        cells.append(self._create_code_cell("""# Display training configuration
+print("\\nTraining Configuration:")
+print(f"  Epochs: {config.epochs}")
+print(f"  Batch Size: {config.batch_size}")
+print(f"  Learning Rate: {config.learning_rate}")
+print(f"  Warmup Epochs: {config.warmup_epochs}")
+print(f"  Checkpoint Interval: {config.checkpoint_interval}")
+print(f"  Mask Ratio: {config.mask_ratio}")
+print(f"  Weight Decay: {config.weight_decay}")
+print()
+"""))
+
+        cells.append(self._create_code_cell(f"""# Setup directories
 CHECKPOINT_DIR = Path("checkpoints")
 CHECKPOINT_DIR.mkdir(exist_ok=True)
 
@@ -1414,7 +1431,7 @@ print(f"Train: {{len(train_dataset)}}, Val: {{len(val_dataset)}}")
 # Create dataloaders
 train_loader = torch.utils.data.DataLoader(
     train_dataset,
-    batch_size=BATCH_SIZE,
+    batch_size=config.batch_size,
     shuffle=True,
     num_workers=0,
     pin_memory=device == "cuda"
@@ -1422,7 +1439,7 @@ train_loader = torch.utils.data.DataLoader(
 
 val_loader = torch.utils.data.DataLoader(
     val_dataset,
-    batch_size=BATCH_SIZE,
+    batch_size=config.batch_size,
     shuffle=False,
     num_workers=0
 )
@@ -1457,22 +1474,25 @@ print(f"Trainable parameters: {{trainable_params:,}}")
         cells.append(self._create_code_cell("""# Optimizer
 optimizer = torch.optim.AdamW(
     model.parameters(),
-    lr=LEARNING_RATE,
+    lr=config.learning_rate,
     weight_decay=config.weight_decay,
     betas=(0.9, 0.95)
 )
 
-# Learning rate scheduler
-def get_lr(epoch, warmup_epochs=2, total_epochs=NUM_EPOCHS):
-    if epoch < warmup_epochs:
-        return LEARNING_RATE * (epoch + 1) / warmup_epochs
+# Learning rate scheduler with warmup
+def get_lr(epoch, config):
+    \"\"\"Get learning rate for given epoch using warmup + cosine decay.\"\"\"
+    if epoch < config.warmup_epochs:
+        # Linear warmup
+        return config.learning_rate * (epoch + 1) / config.warmup_epochs
     else:
-        progress = (epoch - warmup_epochs) / (total_epochs - warmup_epochs)
-        return LEARNING_RATE * 0.5 * (1 + math.cos(math.pi * progress))
+        # Cosine decay
+        progress = (epoch - config.warmup_epochs) / (config.epochs - config.warmup_epochs)
+        return config.learning_rate * 0.5 * (1 + math.cos(math.pi * progress))
 
 scheduler = torch.optim.lr_scheduler.LambdaLR(
     optimizer,
-    lr_lambda=lambda epoch: get_lr(epoch) / LEARNING_RATE
+    lr_lambda=lambda epoch: get_lr(epoch, config) / config.learning_rate
 )
 
 print("Optimizer and scheduler configured")
@@ -1482,13 +1502,13 @@ print("Optimizer and scheduler configured")
         cells.append(self._create_code_cell(f"""# Training loop
 history = {{'train_loss': [], 'val_loss': [], 'lr': []}}
 
-print(f"\\nStarting {model_display} training for {{NUM_EPOCHS}} epochs...")
+print(f"\\nStarting {model_display} training for {{config.epochs}} epochs...")
 print(f"Device: {{device}}")
 print("-" * 50)
 
 best_val_loss = float('inf')
 
-for epoch in range(NUM_EPOCHS):
+for epoch in range(config.epochs):
     current_lr = optimizer.param_groups[0]['lr']
     history['lr'].append(current_lr)
 
@@ -1503,7 +1523,7 @@ for epoch in range(NUM_EPOCHS):
     # Update LR
     scheduler.step()
 
-    print(f"Epoch {{epoch + 1}}/{{NUM_EPOCHS}} | "
+    print(f"Epoch {{epoch + 1}}/{{config.epochs}} | "
           f"Train: {{train_loss:.4f}} | Val: {{val_loss:.4f}} | LR: {{current_lr:.2e}}")
 
     # Save best
@@ -1511,6 +1531,11 @@ for epoch in range(NUM_EPOCHS):
         best_val_loss = val_loss
         save_checkpoint(model, optimizer, epoch, val_loss,
                        CHECKPOINT_DIR / "{model_display.lower().replace('+', 'plus')}_best.pt")
+
+    # Save periodic checkpoint
+    if (epoch + 1) % config.checkpoint_interval == 0:
+        save_checkpoint(model, optimizer, epoch, val_loss,
+                       CHECKPOINT_DIR / f"{model_display.lower().replace('+', 'plus')}_epoch_{{epoch + 1}}.pt")
 
 print("-" * 50)
 print(f"Training complete! Best val loss: {{best_val_loss:.4f}}")
