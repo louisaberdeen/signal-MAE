@@ -114,7 +114,7 @@ class SignalMAEPlusPlus(AudioMAEPlusPlus):
     Advanced Masked Autoencoder for RF signal spectrograms.
 
     This model uses the full AudioMAE++ architecture with all advanced features:
-    - Macaron-style transformer blocks (FFN → Attention → FFN sandwich)
+    - Macaron-style transformer blocks (FFN -> Attention -> FFN sandwich)
     - SwiGLU activation (gated linear unit with Swish)
     - RoPE (Rotary Position Embeddings) for better generalization
 

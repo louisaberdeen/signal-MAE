@@ -69,6 +69,7 @@ class Config:
     weight_decay: float = 0.05
     epochs: int = 50
     warmup_epochs: int = 5
+    checkpoint_interval: int = 5  # Save checkpoint every N epochs
 
     # AudioMAE++ feature flags
     use_macaron: bool = True
