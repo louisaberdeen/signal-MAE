@@ -178,15 +178,15 @@ Modular src/ Structure:
 │ │   ├── esc50.py      # @data_loader_registry.register       │
 │ │   └── custom.py     # Generic + RF loaders                 │
 │ ├── transforms/       # Transform plugins                    │
-│ │   ├── audio.py      # Audio → Spectrogram                  │
-│ │   └── rf.py         # IQ → Spectrogram/Constellation       │
+│ │   ├── audio.py      # Audio to Spectrogram                  │
+│ │   └── rf.py         # IQ to Spectrogram/Constellation       │
 │ ├── training/         # Loss functions                       │
 │ └── embeddings/       # EmbeddingGenerator, Cache, Checkpoint│
 └──────────────────────────────────────────────────────────────┘
 
 Test Generation:
 ┌──────────────────────────────────────────────────────────────┐
-│  tests/generate_tests.py → tests/generated/                  │
+│  tests/generate_tests.py -> tests/generated/                  │
 │  • Interface compliance tests (ABC method implementation)    │
 │  • Architecture compatibility tests (various input sizes)    │
 │  • Plugin registration correctness tests                     │
@@ -196,8 +196,8 @@ Test Generation:
 ### Data Flow
 
 1. **Input**: Audio directory + Metadata CSV + Model checkpoint
-2. **Preprocessing**: Load audio → Generate/load spectrograms (both .npy and .png)
-3. **Inference**: Batch process through AudioMAE encoder → Extract CLS embeddings
+2. **Preprocessing**: Load audio -> Generate/load spectrograms (both .npy and .png)
+3. **Inference**: Batch process through AudioMAE encoder -> Extract CLS embeddings
 4. **Caching**: Save embeddings as .npy + metadata JSON
 5. **FiftyOne Integration**:
    - Create dataset with PNG spectrograms as primary media
@@ -213,7 +213,7 @@ Test Generation:
 **Model**: AudioMAE++ (from `audiomae.py`)
 - Architecture: Vision Transformer with Macaron blocks, SwiGLU, RoPE
 - Encoder output: `[batch_size, 197, 768]` (196 patches + 1 CLS token)
-- Embedding vector: CLS token at position 0 → `[batch_size, 768]`
+- Embedding vector: CLS token at position 0 -> `[batch_size, 768]`
 
 **Inference Pattern**:
 ```python
@@ -426,31 +426,31 @@ class AudioDataLoader(ABC):
 ### Test Cases
 
 **TC-1: Checkpoint Loading**
-- Valid checkpoint → loads successfully
-- Invalid path → clear error message
-- Corrupted checkpoint → validation error
+- Valid checkpoint -> loads successfully
+- Invalid path -> clear error message
+- Corrupted checkpoint -> validation error
 
 **TC-2: Embedding Generation**
-- Single audio file → [1, 768] embedding
-- Batch of 16 files → [16, 768] embeddings
-- Empty directory → empty output with warning
-- Corrupted audio → skip with error log
+- Single audio file -> [1, 768] embedding
+- Batch of 16 files -> [16, 768] embeddings
+- Empty directory -> empty output with warning
+- Corrupted audio -> skip with error log
 
 **TC-3: Cache Operations**
-- First run → generate and save cache
-- Second run → load from cache (fast)
-- Model change → invalidate and regenerate
-- File added → partial update
+- First run -> generate and save cache
+- Second run -> load from cache (fast)
+- Model change -> invalidate and regenerate
+- File added -> partial update
 
 **TC-4: FiftyOne Dataset**
-- Dataset creation → 2000 samples
-- Embeddings attached → all non-null
-- Labels present → classification objects
-- Location fields → valid coordinates
+- Dataset creation -> 2000 samples
+- Embeddings attached -> all non-null
+- Labels present -> classification objects
+- Location fields -> valid coordinates
 
 **TC-5: Similarity Search**
-- Query by sample → returns 20 results
-- Query by vector → returns 20 results
+- Query by sample -> returns 20 results
+- Query by vector -> returns 20 results
 - Similar classes cluster together
 - Different classes separate
 
@@ -565,7 +565,7 @@ pip install fiftyone umap-learn scikit-learn
 **Quick Start**:
 1. Open `fiftyone_visualization.ipynb`
 2. Set `checkpoint_path` in Cell 2
-3. Run all cells (Kernel → Restart & Run All)
+3. Run all cells (Kernel -> Restart & Run All)
 4. Wait ~3-5 minutes for processing
 5. FiftyOne App launches automatically
 
@@ -587,7 +587,7 @@ pip install fiftyone umap-learn scikit-learn
 2. **Advanced Visualizations**
    - 3D UMAP/t-SNE plots
    - Audio waveform overlays in detail view
-   - ✅ Spectrogram thumbnails in App (IMPLEMENTED: PNG previews as primary media)
+   - [DONE] Spectrogram thumbnails in App (IMPLEMENTED: PNG previews as primary media)
    - Interactive confusion matrices
    - Dual-view mode (spectrogram + audio playback)
 

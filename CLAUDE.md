@@ -160,7 +160,7 @@ class MyTransform(BaseTransform):
 ## Model Architecture
 
 ### AudioMAE++ (Default for Audio)
-- **Macaron Blocks**: FFN(½) → Attention → FFN(½) sandwich
+- **Macaron Blocks**: FFN(1/2) -> Attention -> FFN(1/2) sandwich
 - **SwiGLU Activation**: Better than GELU
 - **RoPE**: Rotary position embeddings
 - **Asymmetric**: Large encoder (12L/768D), small decoder (8L/512D)
@@ -252,6 +252,13 @@ embeddings = generator.extract_embedding(spectrograms)
 | `tests/generate_tests.py` | Test generation |
 | `notebooks/generate.py` | Notebook generation (Audio + RF) |
 | `scripts/generate_rf_dataset.py` | CLI for RF dataset generation |
+
+## Code Style
+
+- **No Emojis**: Do not use emojis anywhere in the codebase (code, comments, docstrings, commit messages, or generated outputs). Keep all communication professional and text-based.
+- **Config-Based Parameters**: All training parameters should be read from the Config object, not hardcoded.
+- **Docstrings**: Use clear, concise docstrings following Google style.
+- **Type Hints**: Include type hints for function parameters and return values.
 
 ## Important Notes
 
